@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概念学习 · 大模型的上下文（Context）</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1f2328; --muted:#5b6570;
+    --line:#e3e6ea; --brand:#2f6feb; --brand-soft:#eaf1fe;
+    --warn:#b4530a; --warn-soft:#fff5e6; --ok:#0a7f5a; --ok-soft:#e8f6f0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    line-height:1.75;font-size:16px;}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 64px;}
+  header.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:28px 28px 22px;margin-bottom:22px;}
+  .kicker{font-size:13px;letter-spacing:.08em;color:var(--brand);font-weight:600}
+  h1{font-size:30px;margin:8px 0 10px;line-height:1.3}
+  .one-liner{font-size:17px;color:var(--muted);margin:0}
+  .meta{margin-top:16px;font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 24px;margin-bottom:22px}
+  nav.toc ol{margin:8px 0 0;padding-left:20px}
+  nav.toc a{color:var(--brand);text-decoration:none}
+  nav.toc a:hover{text-decoration:underline}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+  h2{font-size:21px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 8px;color:var(--brand)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+  code{background:#f0f2f5;padding:2px 6px;border-radius:5px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f4f6f8;font-weight:600}
+  .box{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .box.mine{background:var(--brand-soft);border-left:4px solid var(--brand)}
+  .box.warn{background:var(--warn-soft);border-left:4px solid var(--warn)}
+  .box.ok{background:var(--ok-soft);border-left:4px solid var(--ok)}
+  .box .label{font-weight:700;display:block;margin-bottom:6px}
+  .ucurve{display:flex;align-items:flex-end;justify-content:space-around;height:140px;
+    background:#fbfcfd;border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+  .ucurve div{width:34px;background:var(--brand);border-radius:4px 4px 0 0;position:relative}
+  .ucurve div span{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);
+    font-size:11px;color:var(--muted);white-space:nowrap}
+  .src li{margin:12px 0}
+  .src a{color:var(--brand);word-break:break-all}
+  .src .what{color:var(--muted);font-size:14px}
+  details{margin:10px 0;border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:#fbfcfd}
+  summary{cursor:pointer;font-weight:600}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px;line-height:1.9}
+  .q{background:#fbfcfd;border:1px dashed var(--line);border-radius:10px;padding:12px 16px;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">CONCEPT STUDY · 概念学习资料</div>
+  <h1>大模型的上下文（Context）</h1>
+  <p class="one-liner">模型每次推理时<strong>能看到的全部 token</strong>。它不是记忆，而是一份<strong>每次请求都要重新提交</strong>、且容量有限的输入。</p>
+  <div class="meta">
+    <span>深度：standard</span><span>面向：AI 领域新手</span>
+    <span>生成 Skill：concept-study-kit</span><span>日期：2026-09-08</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#c1">学习目标</a></li>
+    <li><a href="#c2">核心问题</a></li>
+    <li><a href="#c3">我的理解（个人解释）</a></li>
+    <li><a href="#c4">核心机制与组成</a></li>
+    <li><a href="#c5">一个具体应用场景</a></li>
+    <li><a href="#c6">易混淆问题与使用边界</a></li>
+    <li><a href="#c7">自测题</a></li>
+    <li><a href="#c8">资料来源</a></li>
+  </ol>
+</nav>
+
+<section id="c1">
+  <h2>1. 学习目标</h2>
+  <ul>
+    <li>学完你能列出一次请求里上下文到底包含哪 6 类内容。</li>
+    <li>学完你能解释为什么"窗口能装 100 万 token"不等于"能有效用好 100 万 token"。</li>
+    <li>学完你能说出至少 4 种上下文管理手段，以及各自解决哪种失效模式。</li>
+    <li>学完你能清楚区分"上下文"与"记忆"。</li>
+    <li>学完你能指出自己项目里可能撑爆上下文的风险点。</li>
+  </ul>
+</section>
+
+<section id="c2">
+  <h2>2. 核心问题</h2>
+  <ol>
+    <li>上下文窗口里到底装了哪些东西？</li>
+    <li>为什么容量变大，用起来却不一定变好？</li>
+    <li>"Lost in the Middle"说明了什么现象？</li>
+    <li>上下文快满了有哪些处理办法？</li>
+    <li>上下文和记忆是一回事吗？</li>
+  </ol>
+</section>
+
+<section id="c3">
+  <h2>3. 我的理解（个人解释）</h2>
+  <div class="box mine">
+    <span class="label">类比：一张固定大小的办公桌</span>
+    <ul>
+      <li><strong>上下文 = 桌面上摊开的纸。</strong>桌子尺寸固定，这就是上下文窗口上限。</li>
+      <li><strong>每次请求都要把纸重新摆一遍。</strong>模型本身不记得上次对话，会话"看起来连续"，是因为程序每轮都把历史重新发了一遍。</li>
+      <li><strong>纸越多，每张分到的注意力越少。</strong>哪怕桌子够大，摊 500 张纸时模型也不可能对每张都同样上心。</li>
+      <li><strong>最容易被忽略的是中间那摞。</strong>放在开头和结尾的信息最容易被用上，中间的最容易被漏掉。</li>
+    </ul>
+  </div>
+  <p>所以"上下文工程"说白了就是一件家务事：<strong>在有限的桌面上，只留下此刻最有用的几张纸</strong>——其余的别放、压缩成摘要、或者塞进抽屉（外部文件 / 记忆），等真需要时再拿出来。</p>
+  <p class="box warn">
+    <span class="label">阅读提示</span>
+    上述为<strong>个人类比与转述</strong>。学术依据见第 8 节来源 2（位置偏差），工程框架见来源 1（上下文工程）。
+  </p>
+</section>
+
+<section id="c4">
+  <h2>4. 核心机制与组成</h2>
+
+  <h3>4.1 上下文里装了什么</h3>
+  <p>一次请求中，以下内容<strong>全部</strong>计入上下文：</p>
+  <table>
+    <tr><th style="width:28%">组成部分</th><th>说明</th></tr>
+    <tr><td>系统提示</td><td>角色设定、规则、约束</td></tr>
+    <tr><td>对话历史</td><td>此前所有轮次的问答</td></tr>
+    <tr><td>工具定义</td><td>每个工具的名称、描述、参数结构（工具一多就很可观）</td></tr>
+    <tr><td>工具返回结果</td><td>长任务中最主要的膨胀来源</td></tr>
+    <tr><td>附件与技能</td><td>上传的文件、已加载的 Skill 内容</td></tr>
+    <tr><td>思考块 / 输出</td><td>模型的推理过程与已生成内容，输出同样占位</td></tr>
+  </table>
+
+  <h3>4.2 为什么它是有限的（四层原因）</h3>
+  <ol>
+    <li><strong>硬上限：</strong>窗口有 token 上限，输入和输出一起算，超了请求会直接失败。</li>
+    <li><strong>注意力预算：</strong>基于 Transformer 架构，n 个 token 之间存在 n² 级别的成对关系。上下文越长，这份预算被摊得越薄。</li>
+    <li><strong>位置偏差（U 形曲线）：</strong>关键信息在开头或结尾时表现最好，在中间时显著下降。</li>
+    <li><strong>上下文腐烂（context rot）：</strong>窗口内 token 越多，模型准确召回其中信息的能力整体下降。</li>
+  </ol>
+  <div class="ucurve" aria-label="U 形位置偏差示意图">
+    <div style="height:110px"><span>开头</span></div>
+    <div style="height:78px"><span>靠前</span></div>
+    <div style="height:45px"><span>中间</span></div>
+    <div style="height:40px"><span>中间</span></div>
+    <div style="height:72px"><span>靠后</span></div>
+    <div style="height:105px"><span>结尾</span></div>
+  </div>
+  <p style="font-size:14px;color:var(--muted);text-align:center;margin-top:-6px">示意：检索准确率随关键信息在上下文中的位置呈 U 形（依据 Liu et al., 2023 的实验结果绘制）</p>
+
+  <h3>4.3 五种管理手段</h3>
+  <table>
+    <tr><th style="width:24%">手段</th><th style="width:34%">怎么做</th><th>解决什么失效</th></tr>
+    <tr><td><strong>即时加载（JIT）</strong></td><td>不预先塞满，需要时让 Agent 用工具去取</td><td>上下文被无用信息占满</td></tr>
+    <tr><td><strong>压缩 / 上下文编辑</strong></td><td>自动清掉过期的工具结果，或把旧对话摘要成一段</td><td>长对话跑不下去</td></tr>
+    <tr><td><strong>提示缓存</strong></td><td>把稳定的前缀（系统提示、工具定义）缓存复用</td><td>重复发送导致的成本（省钱，不省 token）</td></tr>
+    <tr><td><strong>记忆工具</strong></td><td>把要长期保留的信息写到外部文件，跨会话存在</td><td>会话结束即失忆</td></tr>
+    <tr><td><strong>工具搜索 / 程序化调用</strong></td><td>工具多了才加载定义；把一串调用合成一个脚本执行</td><td>工具定义与中间结果撑爆窗口</td></tr>
+  </table>
+  <p class="box ok">
+    <span class="label">我的判断</span>
+    这五种手段不是五选一，而是<strong>治不同的病</strong>：JIT 治"塞太多"、压缩治"跑太长"、缓存治"太贵"、记忆治"记不住"、工具搜索治"工具多"。先定位自己在哪个环节出问题，再选手段——上来全堆一遍是浪费。
+  </p>
+</section>
+
+<section id="c5">
+  <h2>5. 一个具体应用场景</h2>
+  <h3>代码库级重构 Agent：如何不被上下文拖垮</h3>
+  <table>
+    <tr><th style="width:26%">内容</th><th>处理策略</th></tr>
+    <tr><td>系统提示 + 工具定义</td><td>内容稳定 → 使用<strong>提示缓存</strong>，避免每次重复付费</td></tr>
+    <tr><td>读文件 / 跑测试的结果</td><td>几十轮后大量堆积且已过时 → <strong>上下文编辑</strong>自动清除</td></tr>
+    <tr><td>架构决策、踩坑记录</td><td>必须跨会话保留 → 写入<strong>记忆文件</strong>，下次开工先读</td></tr>
+    <tr><td>硬性约束（命名规范、禁止改动目录）</td><td>放在系统提示<strong>最开头</strong>，避开中间盲区</td></tr>
+    <tr><td>具体代码内容</td><td>不预先全量加载 → <strong>即时加载</strong>，用到哪个文件读哪个</td></tr>
+  </table>
+  <p><strong>不这么做会怎样：</strong>任务跑到中途上下文耗尽，请求直接失败；或者勉强跑完，但模型因为注意力被稀释而开始漏掉早期约束、改错文件。</p>
+  <p><strong>效果参考：</strong>Anthropic 公布的内部评测显示，在 agentic search 任务上，"记忆工具 + 上下文编辑"组合相比 baseline 性能提升 39%，单独使用上下文编辑提升 29%；在 100 轮 web search 评测中，上下文编辑让原本会因上下文耗尽而失败的任务得以完成，同时 token 消耗降低 84%。</p>
+  <p class="box warn">
+    <span class="label">数据使用提醒</span>
+    上段数字来自<strong>厂商自测的官方发布</strong>（来源 4），用于说明量级与趋势，不应当作跨产品可直接对比的基准。具体窗口大小与产品能力请以官方文档为准，会随版本变动。
+  </p>
+</section>
+
+<section id="c6">
+  <h2>6. 易混淆问题与使用边界</h2>
+
+  <div class="q">
+    <p><strong>① 误解："上下文窗口就是模型的记忆。"</strong></p>
+    <p><strong>正解：</strong>上下文是<strong>每次请求重新提交的无状态输入</strong>，请求结束就没了；跨会话保留必须依赖外部存储（记忆文件、数据库）。</p>
+    <p><strong>怎么判断：</strong>新开一个对话，它还记得上周的结论吗？不记得——那之前只是上下文，不是记忆。</p>
+  </div>
+
+  <div class="q">
+    <p><strong>② 误解："窗口越大越好，100 万 token 就能整本塞进去。"</strong></p>
+    <p><strong>正解：</strong>容量 ≠ 有效利用。注意力稀释和位置偏差会让"塞满"反而降低精度。目标是<strong>放进最小的高信号 token 集</strong>，不是放进最多的内容。</p>
+    <p><strong>怎么判断：</strong>做检索精度测试，别只验证"能不能塞下"。</p>
+  </div>
+
+  <div class="q">
+    <p><strong>③ 误解："RAG 和长上下文是同一件事。"</strong></p>
+    <p><strong>正解：</strong>RAG 是"先检索、只把相关的放进来"；长上下文是"容量更大"。两者解决的是同一个问题的不同侧面，可以叠加使用。</p>
+    <p><strong>怎么判断：</strong>看信息是<strong>预先全塞进去</strong>（长上下文思路）还是<strong>按需取回来</strong>（RAG 思路）。</p>
+  </div>
+
+  <div class="q">
+    <p><strong>④ 误解："压缩 / 摘要是无损的。"</strong></p>
+    <p><strong>正解：</strong>压缩必然丢细节，关键数值、ID、专有名词可能被改写或丢失。</p>
+    <p><strong>怎么判断：</strong>压缩前，把绝对不能丢的事实显式写进记忆文件，不要指望摘要会保留它们。</p>
+  </div>
+
+  <div class="q">
+    <p><strong>⑤ 使用边界（安全）：任何进上下文的内容都会被发送给模型服务商</strong></p>
+    <p>API Key、密码、身份证号、未脱敏的客户数据——一旦进入上下文就已外发。这类内容必须在进入前脱敏或拦截，不能指望"它应该不会记住"。</p>
+  </div>
+
+  <div class="q">
+    <p><strong>⑥ 使用边界（数值）：窗口大小会变</strong></p>
+    <p>不同模型、不同版本的上下文窗口差异很大，且会调整。引用具体数字时务必以官方文档当前版本为准，本资料因此<strong>不写死任何具体数值</strong>。</p>
+  </div>
+</section>
+
+<section id="c7">
+  <h2>7. 自测题</h2>
+  <ol>
+    <li>列举至少 4 类会计入上下文的内容。（对应 §4.1）</li>
+    <li>为什么上下文变长后，模型的表现反而可能下降？说出两个原因。（对应 §4.2）</li>
+    <li>"提示缓存"省的是什么？不省的是什么？（对应 §4.3）</li>
+    <li><strong>应用题：</strong>你的 Agent 每次跑 30 轮后就报"上下文超限"。请说出两种处理思路，并说明各自解决什么问题。（对应 §4.3）</li>
+    <li><strong>辨析题：</strong>同事说："我们把整个产品手册塞进系统提示了，模型现在什么都知道。"请用本资料的概念指出这句话的两个问题。（对应 §4.2、§6-②）</li>
+  </ol>
+
+  <details>
+    <summary>参考答案（先自己答，再展开）</summary>
+    <ol>
+      <li>系统提示、对话历史、工具定义、工具返回结果、附件与技能、思考块与输出（任选 4 类即可）。</li>
+      <li>① 注意力预算被摊薄：n 个 token 之间的成对关系随长度增长，模型难以同等对待全部内容；② 位置偏差：位于上下文中间的信息最容易被忽略；③ 上下文腐烂：token 越多，准确召回能力整体下降。（答出任意两个）</li>
+      <li>提示缓存<strong>省的是成本</strong>（重复发送相同前缀时按缓存价计费），<strong>不省 token</strong>——这些 token 依然占用上下文窗口，依然消耗注意力预算。</li>
+      <li>思路一：<strong>上下文编辑 / 压缩</strong>，自动清掉已过期的工具结果，解决"跑太长"；思路二：<strong>即时加载</strong>，不要把文件全量预先塞进去，用到再取，解决"塞太多"；思路三（加分）：把跨轮次必须保留的结论写入<strong>记忆文件</strong>，解决"清掉之后又要用到"的矛盾。</li>
+      <li>问题一：<strong>容量不等于有效利用</strong>——手册塞进去了，但模型对其中内容的召回会随总量上升而下降，尤其是"中间"部分（位置偏差）；正确做法是只放入当前任务相关的高信号内容。问题二：<strong>成本与注意力</strong>——每次请求都要重发整本手册，成本高且稀释注意力；应改为检索式按需取用（RAG / 即时加载），或用提示缓存降低成本。</li>
+    </ol>
+  </details>
+</section>
+
+<section id="c8">
+  <h2>8. 资料来源</h2>
+  <ul class="src">
+    <li>
+      <strong>Effective context engineering for AI agents</strong> · Anthropic 工程博客<br>
+      <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents</a><br>
+      <span class="what">支撑：上下文工程的定义、注意力预算、context rot。已验证可访问（HTTP 200）。</span>
+    </li>
+    <li>
+      <strong>Lost in the Middle: How Language Models Use Long Contexts</strong> · Liu, Lin, Hewitt, Paranjape, Bevilacqua, Petroni, Liang（TACL 2024）<br>
+      <a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">https://arxiv.org/abs/2307.03172</a>
+      ｜DOI：<a href="https://doi.org/10.1162/tacl_a_00638" target="_blank" rel="noopener">10.1162/tacl_a_00638</a><br>
+      <span class="what">支撑：§4.2 的 U 形位置偏差结论。论文预印本与期刊版均已核对出处（本沙箱网络无法直连 arxiv，故同时提供 DOI 以便核查）。</span>
+    </li>
+    <li>
+      <strong>Context windows</strong> · Claude 官方开发者文档<br>
+      <a href="https://platform.claude.com/docs/en/build-with-claude/context-windows" target="_blank" rel="noopener">https://platform.claude.com/docs/en/build-with-claude/context-windows</a><br>
+      <span class="what">支撑：什么内容计入上下文窗口的官方口径。已验证可访问（HTTP 200）。</span>
+    </li>
+    <li>
+      <strong>Managing context on the Claude Developer Platform</strong> · Anthropic 官方发布<br>
+      <a href="https://www.anthropic.com/news/context-management" target="_blank" rel="noopener">https://www.anthropic.com/news/context-management</a><br>
+      <span class="what">支撑：上下文编辑与记忆工具的机制，以及 §5 引用的官方自测数据。已验证可访问（HTTP 200）。</span>
+    </li>
+    <li>
+      <strong>Context management</strong> · Claude Academy 官方课程<br>
+      <a href="https://academy.claude.com/courses/claude-platform-101/context-management" target="_blank" rel="noopener">https://academy.claude.com/courses/claude-platform-101/context-management</a><br>
+      <span class="what">支撑：§4.1 上下文构成清单、四种管理模式的归纳。已验证可访问（HTTP 200）。</span>
+    </li>
+    <li>
+      <strong>Manage tool context</strong> · Claude 官方工具文档<br>
+      <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/manage-tool-context" target="_blank" rel="noopener">https://platform.claude.com/docs/en/agents-and-tools/tool-use/manage-tool-context</a><br>
+      <span class="what">支撑：工具定义与工具结果导致上下文膨胀的四种对策。已验证可访问（HTTP 200）。</span>
+    </li>
+  </ul>
+  <p class="box warn">
+    <span class="label">来源使用说明</span>
+    链接于 2026-09-08 逐条访问验证。正文为转述与个人类比，未整段复制；厂商自测数据已标注来源与局限；涉及具体窗口大小的数值一律不写死，以官方文档为准。
+  </p>
+</section>
+
+<footer>
+  由项目级 Skill <code>concept-study-kit</code> 生成 · 2026-09-08<br>
+  人工核查：已逐条验证来源可达性、已标注厂商自测数据性质、已补充安全边界<br>
+  本文件属于 concept-study-lab 学习仓库
+</footer>
+
+</div>
+</body>
+</html>

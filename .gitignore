@@ -1,0 +1,83 @@
+# ==========================================================
+# concept-study-lab · 忽略规则
+# 目的：防止密钥、密码、个人隐私与本地临时文件被提交
+# 注意：.workbuddy/skills/ 是本作业的核心产物，必须提交，不可忽略
+# ==========================================================
+
+# ---------- 1. 密钥与凭据（最高优先级） ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*_rsa
+*_ed25519
+secret*
+*secret*
+*token*
+*credential*
+credentials.json
+service-account*.json
+.github-token
+gh_token.txt
+
+# ---------- 2. 环境变量与本地配置 ----------
+*.local
+*.local.*
+config.local.*
+settings.local.json
+
+# ---------- 3. 个人隐私与本地笔记 ----------
+# .workbuddy 下的记忆/日志属本机私有，不随仓库公开
+.workbuddy/memory/
+.workbuddy/logs/
+.workbuddy/*.local.md
+personal/
+private/
+我的*/
+笔记/
+
+# ---------- 4. 操作系统 ----------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---------- 5. 编辑器 / IDE ----------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ---------- 6. 语言与依赖产物 ----------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ---------- 7. 临时与备份 ----------
+*.tmp
+*.temp
+*.bak
+*.old
+~$*.docx
+.clonetmp/

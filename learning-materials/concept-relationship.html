@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概念关系 · Agent · 上下文 · Skill</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1f2328; --muted:#5b6570;
+    --line:#e3e6ea; --brand:#2f6feb; --brand-soft:#eaf1fe;
+    --warn:#b45309; --warn-soft:#fff5e6; --ok:#0a7f5a; --ok-soft:#e8f6f0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    line-height:1.75;font-size:16px;}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 64px;}
+  header.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;margin-bottom:22px}
+  .kicker{font-size:13px;letter-spacing:.08em;color:var(--brand);font-weight:600}
+  h1{font-size:29px;margin:8px 0 10px;line-height:1.3}
+  .one-liner{font-size:17px;color:var(--muted);margin:0}
+  .meta{margin-top:16px;font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+  h2{font-size:21px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--brand)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+  code{background:#f0f2f5;padding:2px 6px;border-radius:5px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f4f6f8;font-weight:600}
+  .box{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:15px}
+  .box.mine{background:var(--brand-soft);border-left:4px solid var(--brand)}
+  .box.warn{background:var(--warn-soft);border-left:4px solid var(--warn)}
+  .box .label{font-weight:700;display:block;margin-bottom:6px}
+  a{color:var(--brand)}
+  /* 关系图：纯 CSS，不依赖任何 CDN */
+  .diagram{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:26px 20px;margin:18px 0}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}
+  .node{border-radius:12px;padding:16px 18px;text-align:center;font-size:15px;line-height:1.6}
+  .node b{display:block;font-size:17px;margin-bottom:4px}
+  .node small{color:var(--muted);font-size:13px}
+  .n-a{background:var(--brand-soft);border:2px solid var(--brand)}
+  .n-c{background:var(--warn-soft);border:2px solid var(--warn)}
+  .n-s{background:var(--ok-soft);border:2px solid var(--ok)}
+  .n-m{background:#f4f6f8;border:2px dashed #8b949e}
+  .edge{text-align:center;font-size:13px;color:var(--muted);margin:10px 0}
+  .arrowdown{text-align:center;font-size:22px;color:var(--brand);line-height:1}
+  .loop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:16px 0;font-size:14px}
+  .loop span.node{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+  .loop span.arrow{color:var(--brand);font-weight:700}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px;line-height:1.9}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">CONCEPT RELATIONSHIP · 概念关系说明</div>
+  <h1>Agent · 上下文 · Skill 三者是什么关系</h1>
+  <p class="one-liner"><strong>上下文是 Agent 每一轮"能看到的世界"，Skill 是存放在这个世界之外、可按需取用的经验包。</strong></p>
+  <div class="meta">
+    <span>Markdown 版：<a href="concept-relationship.md">concept-relationship.md</a></span>
+    <span>日期：2026-09-08</span><span>人工已核查</span>
+  </div>
+</header>
+
+<section>
+  <h2>1. 三者的定位</h2>
+  <table>
+    <tr><th style="width:16%">概念</th><th style="width:26%">回答的问题</th><th style="width:20%">时间尺度</th><th>存在位置</th></tr>
+    <tr><td><strong>Agent</strong></td><td>谁在做事、怎么做决策</td><td>一次任务的执行过程</td><td>运行时的循环逻辑</td></tr>
+    <tr><td><strong>上下文</strong></td><td>它当下能依据什么做决策</td><td>单轮 / 单次会话</td><td>每次请求发送给模型的 token</td></tr>
+    <tr><td><strong>Skill</strong></td><td>它的本领从哪来、怎么复用</td><td>跨会话 / 跨任务</td><td>文件系统（可用 Git 管理）</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. 关系图</h2>
+  <div class="diagram">
+    <div class="dgrid">
+      <div class="node n-a">
+        <b>Agent</b>
+        目标 → 规划 → 行动 → 观察<br>
+        <small>执行者：循环由模型掌控</small>
+      </div>
+      <div class="node n-c">
+        <b>上下文</b>
+        本轮可见的全部 token<br>
+        <small>有限 · 无状态 · 每次重发</small>
+      </div>
+    </div>
+    <div class="edge">↑ 每轮工具结果不断撑大上下文　｜　↓ 决定这一轮能依据什么决策</div>
+    <div class="dgrid">
+      <div class="node n-s">
+        <b>Skill</b>
+        文件化的可复用知识包<br>
+        <small>常驻磁盘，命中才加载</small>
+      </div>
+      <div class="node n-m">
+        <b>记忆 / 外部文件</b>
+        跨会话持久化<br>
+        <small>沉淀成熟后固化为 Skill</small>
+      </div>
+    </div>
+    <div class="edge">虚线关系：Skill 按需注入上下文；Agent 依据 description 判断是否取用</div>
+  </div>
+  <p style="font-size:14px;color:var(--muted);text-align:center">读图要点：上下文位于中心，因为另外两者都要通过它才能起作用。</p>
+</section>
+
+<section>
+  <h2>3. 重点一：上下文如何影响 Agent 的工作</h2>
+
+  <h3>3.1 上下文是 Agent 的唯一信息入口</h3>
+  <p>Agent 的每一步决策——规划什么、调用哪个工具、是否结束——都只能基于<strong>当前上下文里的内容</strong>。上下文里没有的信息，对这一轮的 Agent 而言等于不存在。</p>
+
+  <h3>3.2 Agent 的循环会自我膨胀</h3>
+  <p>这是 Agent 特有、也最容易被忽视的问题：</p>
+  <pre style="background:#1f2430;color:#e6e9ef;padding:14px 16px;border-radius:10px;font-size:13.5px;overflow-x:auto"><code>第 1 轮：系统提示 + 用户目标
+第 2 轮：+ 第 1 轮的工具调用与返回结果
+第 3 轮：+ 第 2 轮的工具调用与返回结果
+   …
+第 N 轮：上下文被历史工具结果不断撑大</code></pre>
+  <p><strong>Workflow 不会这样</strong>（每步是独立调用），而 <strong>Agent 会</strong>——它必须带着完整历史才能做下一步判断。所以"能不能跑完一个长任务"，本质上是个上下文问题。</p>
+
+  <h3>3.3 撑大的后果不只是"装不下"</h3>
+  <table>
+    <tr><th style="width:18%">后果</th><th style="width:42%">表现</th><th>对应机制</th></tr>
+    <tr><td>硬失败</td><td>超出窗口上限，请求直接报错</td><td>窗口有 token 上限</td></tr>
+    <tr><td>质量下降</td><td>模型开始遗忘早期的约束（如"禁止改动 A 目录"）</td><td>注意力预算被稀释</td></tr>
+    <tr><td>位置偏差</td><td>写在说明<strong>中间</strong>的规则最容易被忽略</td><td>U 形曲线（Lost in the Middle）</td></tr>
+    <tr><td>成本上升</td><td>每轮都要重发全部历史</td><td>输入 token 计费</td></tr>
+  </table>
+
+  <div class="box mine">
+    <span class="label">我的判断</span>
+    评价一个 Agent 系统的工程水平，看它的<strong>上下文策略</strong>比看它的提示词有用得多。提示词决定它起步好不好，上下文策略决定它能走多远。
+  </div>
+</section>
+
+<section>
+  <h2>4. 重点二：Skill 如何沉淀可复用任务知识</h2>
+
+  <h3>4.1 从"常驻上下文"到"常驻磁盘"</h3>
+  <table>
+    <tr><th style="width:22%">做法</th><th style="width:34%">知识放在哪</th><th>代价</th></tr>
+    <tr><td>写进系统提示</td><td>每次请求的上下文里</td><td>无论用不用都占 token，且总量受限</td></tr>
+    <tr><td><strong>写成 Skill</strong></td><td>文件系统里</td><td>不用时不占；用时才花 token 换入</td></tr>
+  </table>
+  <p>Skill 通过<strong>三层渐进式披露</strong>实现这一点：元数据常驻（约 100 tokens/个）→ 命中后加载正文 → 资源文件按需加载。因此一个 Skill 能打包的知识量<strong>几乎不受上下文窗口限制</strong>。</p>
+
+  <h3>4.2 沉淀是怎么发生的</h3>
+  <div class="loop">
+    <span class="node">第一次做某类任务</span><span class="arrow">→</span>
+    <span class="node">写成 SKILL.md</span><span class="arrow">→</span>
+    <span class="node">Git 版本管理</span><span class="arrow">→</span>
+    <span class="node">可评审、可共享</span><span class="arrow">→</span>
+    <span class="node">下一个 Agent 直接具备本领</span>
+  </div>
+  <p class="box mine">
+    <span class="label">我的判断</span>
+    因为 Skill 就是普通目录，它天然获得了版本管理、Code Review、回滚、分发的能力。这让"经验"第一次从聊天记录里的一次性文本，变成了<strong>可积累的工程资产</strong>。
+  </p>
+</section>
+
+<section>
+  <h2>5. 三者的闭环</h2>
+  <ol>
+    <li><strong>Skill 让 Agent 更会做事</strong>（按需获得专家流程）；</li>
+    <li><strong>Agent 做事产生大量上下文</strong>（工具结果、试错过程）；</li>
+    <li><strong>上下文管理挑出值得留下的部分</strong>（压缩掉噪声，结论写入记忆文件）；</li>
+    <li><strong>沉淀成熟后固化为 Skill</strong>；</li>
+    <li>下一轮 Agent 从更高的起点出发。</li>
+  </ol>
+
+  <div class="box mine">
+    <span class="label">判断一：上下文管理与 Skill 是同一个问题的两个时间尺度</span>
+    本质都是"如何在有限的注意力预算里放入最有用的 token"。区别只在于：上下文管理解决<strong>本轮 / 本次会话</strong>的取舍，Skill 解决<strong>跨会话 / 跨任务</strong>的复用。
+  </div>
+  <div class="box mine">
+    <span class="label">判断二：Skill 的流行是上下文受限的必然结果</span>
+    正因为上下文是稀缺资源，才需要把知识外置到文件系统、按需加载。若上下文无限且免费，Skill 这种设计的必要性会大打折扣。
+  </div>
+  <div class="box mine">
+    <span class="label">判断三：Agent 是执行者，上下文是它当下的意识，Skill 是它的长期训练</span>
+    只有意识没有训练，会反复犯低级错误；只有训练没有意识，拿不到当前任务的真实信息。两者都要通过上下文这个唯一入口起作用。
+  </div>
+</section>
+
+<section>
+  <h2>6. 一个贯穿三者的例子</h2>
+  <table>
+    <tr><th style="width:32%">阶段</th><th style="width:20%">对应概念</th><th>实际发生的事</th></tr>
+    <tr><td>我提出"学习三个概念"</td><td>Agent 接收目标</td><td>循环开始，拆解为多个子任务</td></tr>
+    <tr><td>读取 SKILL.md</td><td>Skill 被加载</td><td>按需注入约 200 行的流程与规范</td></tr>
+    <tr><td>检索并验证来源链接</td><td>上下文被填充</td><td>网页内容进入上下文，供判断</td></tr>
+    <tr><td>连学三个概念</td><td>上下文压力上升</td><td>需要靠结构化输出控制增量</td></tr>
+    <tr><td>三次产出结构一致</td><td>Skill 的价值</td><td>流程被固化，没有每次重新口述</td></tr>
+    <tr><td>提交到 Git 仓库</td><td>Skill 的沉淀</td><td>方法本身成为可版本化的资产</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>7. 常见误读对照</h2>
+  <table>
+    <tr><th style="width:32%">常见说法</th><th style="width:28%">问题</th><th>更准确的表述</th></tr>
+    <tr><td>"上下文就是 Agent 的记忆"</td><td>混淆无状态输入与持久化存储</td><td>上下文每次请求重发；跨会话保留靠记忆 / 外部文件</td></tr>
+    <tr><td>"Skill 是一种工具"</td><td>混淆"会做"与"够得着"</td><td>工具扩展能力边界，Skill 传授方法；MCP 负责连接外部系统</td></tr>
+    <tr><td>"上下文越大，Skill 就没必要了"</td><td>只看容量，忽略注意力成本</td><td>容量不等于有效利用；Skill 省的是注意力预算，不只是空间</td></tr>
+    <tr><td>"Agent 强不强看模型"</td><td>忽略工程因素</td><td>同样模型下，上下文策略与 Skill 质量会造成巨大差异</td></tr>
+    <tr><td>"Skill 装上就自动生效"</td><td>忽略触发机制</td><td>是否命中取决于 description 是否写清"做什么 + 何时用"</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>8. 资料来源</h2>
+  <p>关系篇建立在三份概念资料之上，来源均已逐条验证可达：</p>
+  <ul>
+    <li><a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building effective agents</a> · Anthropic（Workflow / Agent 区分）</li>
+    <li><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective context engineering for AI agents</a> · Anthropic（注意力预算、context rot）</li>
+    <li><a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">Lost in the Middle</a> · Liu et al.（U 形位置偏差；DOI: <a href="https://doi.org/10.1162/tacl_a_00638" target="_blank" rel="noopener">10.1162/tacl_a_00638</a>）</li>
+    <li><a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills" target="_blank" rel="noopener">Equipping agents for the real world with Agent Skills</a> · Anthropic（渐进式披露）</li>
+    <li><a href="https://agentskills.io/specification" target="_blank" rel="noopener">Agent Skills 开放标准规范</a> · agentskills.io（目录结构与元数据规则）</li>
+  </ul>
+  <p class="box warn">
+    <span class="label">说明</span>
+    标注"我的判断"的段落为<strong>个人观点与推断</strong>，非来源原文结论；其余内容均有第 8 节来源支撑。
+  </p>
+</section>
+
+<footer>
+  由项目级 Skill <code>concept-study-kit</code> 生成 · 2026-09-08<br>
+  本页为 <a href="concept-relationship.md">concept-relationship.md</a> 的网页呈现版，内容一致<br>
+  本文件属于 concept-study-lab 学习仓库
+</footer>
+
+</div>
+</body>
+</html>
