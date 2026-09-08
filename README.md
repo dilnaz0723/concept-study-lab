@@ -5,6 +5,8 @@
 
 **仓库地址**：https://github.com/dilnaz0723/concept-study-lab
 
+**作业提交说明**：[SUBMISSION.md](SUBMISSION.md) —— 对照评分项逐条说明实现、证据与自评，含可复验的验证命令。
+
 ---
 
 ## 1. 这个仓库是做什么的
@@ -38,7 +40,8 @@ concept-study-lab/
 │   ├── skill.html                    # 概念三：Skill
 │   ├── concept-relationship.md       # 三者关系说明（Markdown 源，含 Mermaid 图）
 │   └── concept-relationship.html     # 三者关系说明（网页版，可直接浏览器打开）
-├── README.md
+├── README.md                              # 仓库说明
+├── SUBMISSION.md                          # 作业提交说明（对照评分项自查）
 └── .gitignore
 ```
 
