@@ -3,6 +3,8 @@
 > 用 AI 辅助完成的一次完整学习闭环：**建 Skill → 用 Skill 学概念 → 人工核查 → 版本化沉淀 → 推到 GitHub**。
 > 本仓库既是一份作业成果，也是一个可以持续复用的"概念学习工具箱"。
 
+**仓库地址**：https://github.com/dilnaz0723/concept-study-lab
+
 ---
 
 ## 1. 这个仓库是做什么的
@@ -153,7 +155,7 @@ AI 生成的内容不能直接用。以下是本次**逐项人工核查**的结�
 
 ```bash
 # 1. 克隆仓库
-git clone git@github.com:<你的用户名>/concept-study-lab.git
+git clone git@github.com:dilnaz0723/concept-study-lab.git
 cd concept-study-lab
 
 # 2. 用 WorkBuddy 打开该目录（Skill 会自动可用）
